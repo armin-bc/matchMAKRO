@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MacroChef - AI-Powered Macro-Friendly Meal Planning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-purple-400 via-purple-500 to-indigo-600 min-h-screen flex flex-col overflow-hidden">
+    <!-- Progress Bar -->
+    <div class="fixed top-0 left-0 right-0 h-1 bg-purple-200/30 z-50">
+        <div id="progress-bar" class="h-full bg-white transition-all duration-300" style="width: 0%"></div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="flex-1 flex flex-col" style="height: 100vh; height: calc(var(--vh, 1vh) * 100);">
+        <!-- Header -->
+        <div class="bg-purple-700 text-white p-4 text-center shadow-lg flex-shrink-0">
+            <h1 class="text-2xl font-bold flex items-center justify-center gap-2">
+                MacroChef <span class="text-3xl">💪</span>
+            </h1>
+            <p class="text-purple-200 text-xs mt-1">AI-Powered Macro-Friendly Meal Planning</p>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-hidden bg-white rounded-t-3xl mt-4 shadow-2xl">
+            <!-- Splash Screen -->
+            <div id="splash-screen" class="screen h-full flex flex-col items-center justify-center p-8">
+                <div class="text-center">
+                    <div class="text-7xl mb-6 animate-bounce">🏋️‍♂️</div>
+                    <h2 class="text-4xl font-bold text-purple-800 mb-3">MacroChef</h2>
+                    <p class="text-purple-600 text-lg mb-8">Hit your macros perfectly</p>
+                    <button id="start-btn" class="bg-purple-600 text-white font-bold py-4 px-10 rounded-full shadow-lg text-lg">
+                        Let's Cook
+                    </button>
+                    <button id="view-saved-splash-btn" class="block mt-6 text-purple-600 text-sm">
+                        View Saved Recipes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 1: Ingredient Input -->
+            <div id="step-1" class="screen h-full flex flex-col p-6" style="display: none;">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                        1
+                    </div>
+                </div>
+                
+                <h2 class="text-2xl font-bold text-purple-800 text-center mb-2">What's Available?</h2>
+                <p class="text-purple-600 text-center mb-6">Snap your fridge or type ingredients</p>
+                
+                <div class="flex-1 flex flex-col gap-4">
+                    <!-- Photo Upload Area -->
+                    <label for="image-upload" class="flex-1 flex flex-col items-center justify-center bg-purple-50 rounded-2xl border-3 border-dashed border-purple-300 cursor-pointer hover:bg-purple-100 transition-colors">
+                        <i class="fas fa-camera text-5xl text-purple-400 mb-3"></i>
+                        <p class="text-purple-600 font-semibold">Take/Upload Photo</p>
+                        <p class="text-purple-400 text-sm mt-1">Tap to scan your fridge</p>
+                    </label>
+                    <input type="file" id="image-upload" accept="image/*" capture="environment" class="hidden">
+                    
+                    <div class="text-center text-purple-400 font-bold text-sm">OR</div>
+                    
+                    <!-- Ingredients Text Area -->
+                    <textarea id="ingredients-text" 
+                        rows="3" 
+                        placeholder="Type ingredients (e.g., chicken, rice, broccoli...)" 
+                        class="w-full p-4 rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none resize-none"></textarea>
+                    
+                    <!-- Next Button -->
+                    <button id="next-to-step-2-btn" class="w-full bg-purple-600 text-white font-bold py-4 rounded-full shadow-lg text-lg mt-auto">
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Macro Targets & Customization -->
+            <div id="step-2" class="screen h-full flex flex-col p-6 overflow-y-auto" style="display: none;">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                        2
+                    </div>
+                </div>
+                
+                <h2 class="text-2xl font-bold text-purple-800 text-center mb-2">Your Targets</h2>
+                <p class="text-purple-600 text-center mb-4 text-sm">Set your macros and preferences</p>
+                
+                <!-- Macro Targets Grid -->
+                <div class="bg-purple-50 rounded-2xl p-4 mb-4">
+                    <h3 class="text-purple-700 font-bold mb-3 text-center">Macro Targets</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-600">Calories</label>
+                            <input type="number" id="calories-target" placeholder="500" value="500"
+                                class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none text-center font-bold">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">Protein (g)</label>
+                            <input type="number" id="protein-target" placeholder="40" value="40"
+                                class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none text-center font-bold">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">Carbs (g)</label>
+                            <input type="number" id="carbs-target" placeholder="50" value="50"
+                                class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none text-center font-bold">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">Fat (g)</label>
+                            <input type="number" id="fat-target" placeholder="15" value="15"
+                                class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none text-center font-bold">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preferences -->
+                <div class="space-y-3 flex-1">
+                    <select id="meal-type" class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none bg-white">
+                        <option value="any">Any Meal Type</option>
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snack">Snack</option>
+                        <option value="pre-workout">Pre-Workout</option>
+                        <option value="post-workout">Post-Workout</option>
+                    </select>
+                    
+                    <select id="cuisine" class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none bg-white">
+                        <option value="any">Any Cuisine</option>
+                        <option value="italian">Italian</option>
+                        <option value="mexican">Mexican</option>
+                        <option value="asian">Asian</option>
+                        <option value="indian">Indian</option>
+                        <option value="american">American</option>
+                        <option value="mediterranean">Mediterranean</option>
+                    </select>
+                    
+                    <select id="dietary-restriction" class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none bg-white">
+                        <option value="">No Dietary Restrictions</option>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="gluten-free">Gluten-Free</option>
+                        <option value="dairy-free">Dairy-Free</option>
+                        <option value="keto">Keto</option>
+                        <option value="paleo">Paleo</option>
+                    </select>
+                    
+                    <input type="text" id="exclude" placeholder="Exclude ingredients (e.g., nuts, shellfish)" 
+                        class="w-full p-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none">
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-3 mt-4">
+                    <button id="back-btn" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-full">
+                        ← Back
+                    </button>
+                    <button id="generate-recipes-btn" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded-full shadow-lg">
+                        Generate ✨
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Recipe Results -->
+            <div id="step-3" class="screen h-full flex flex-col" style="display: none;">
+                <div class="p-4 pb-2">
+                    <h2 class="text-2xl font-bold text-purple-800 text-center">Perfect Matches</h2>
+                    <p class="text-purple-600 text-center text-sm">Swipe to browse recipes</p>
+                    
+                    <!-- Recipe Filter Tabs -->
+                    <div class="flex justify-center mt-4 gap-2">
+                        <button class="tab-btn active bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium" data-tab="generated">
+                            New
+                        </button>
+                        <button class="tab-btn bg-purple-200 text-purple-800 px-4 py-2 rounded-full text-sm font-medium" data-tab="community">
+                            Popular
+                        </button>
+                        <button class="tab-btn bg-purple-200 text-purple-800 px-4 py-2 rounded-full text-sm font-medium" data-tab="saved">
+                            Saved
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recipe List -->
+                <div id="recipe-list" class="flex-1 overflow-y-auto p-4 pb-20"></div>
+                
+                <!-- Back Button -->
+                <div class="p-4 bg-white border-t">
+                    <button id="back-to-customize-btn" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-full">
+                        ← Back to Customize
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+            <div class="flex justify-around py-2 px-4">
+                <button class="nav-item flex flex-col items-center p-2 text-purple-600" id="nav-home">
+                    <i class="fas fa-home text-xl"></i>
+                    <span class="text-xs mt-1">Home</span>
+                </button>
+                <button class="nav-item flex flex-col items-center p-2 text-gray-400" id="nav-search">
+                    <i class="fas fa-search text-xl"></i>
+                    <span class="text-xs mt-1">Browse</span>
+                </button>
+                <button class="nav-item flex flex-col items-center p-2 text-gray-400" id="nav-saved">
+                    <i class="fas fa-bookmark text-xl"></i>
+                    <span class="text-xs mt-1">Saved</span>
+                </button>
+                <button class="nav-item flex flex-col items-center p-2 text-gray-400" id="nav-help">
+                    <i class="fas fa-question-circle text-xl"></i>
+                    <span class="text-xs mt-1">Help</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 flex flex-col items-center shadow-2xl">
+            <div class="spinner"></div>
+            <p class="mt-4 text-purple-800 font-medium" id="loading-text">Finding perfect matches...</p>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 id="modal-title" class="text-xl font-bold text-purple-800 mb-4">Alert</h3>
+            <p id="modal-message" class="text-purple-600 mb-6"></p>
+            <button onclick="document.getElementById('message-modal').style.display='none'" 
+                class="w-full bg-purple-600 text-white font-bold py-3 rounded-full">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-2xl font-bold text-purple-800">About MacroChef</h2>
+                <button id="close-help-btn" class="text-gray-400 text-2xl leading-none">&times;</button>
+            </div>
+            <p class="text-purple-600 text-sm mb-4">
+                MacroChef helps you create perfect meals that hit your exact macro targets. 
+                Simply tell us what ingredients you have and your nutritional goals!
+            </p>
+            <h3 class="text-lg font-bold text-purple-800 mb-2">Features:</h3>
+            <ul class="text-purple-600 text-sm list-disc list-inside mb-4">
+                <li>AI recipe generation with exact macros</li>
+                <li>Image analysis for ingredients</li>
+                <li>Real food images & video tutorials</li>
+                <li>Community recipes & ratings</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

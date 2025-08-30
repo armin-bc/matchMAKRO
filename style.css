@@ -1,0 +1,403 @@
+/* Base Styles - Mobile First */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --vh: 1vh;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    position: fixed;
+    width: 100%;
+}
+
+/* Prevent bounce scrolling on iOS */
+.screen {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateX(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+/* Native-like input styling */
+input, textarea, select {
+    -webkit-appearance: none;
+    appearance: none;
+    font-size: 16px; /* Prevents zoom on iOS */
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+}
+
+/* Native-like buttons */
+button {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+/* Progress Bar */
+#progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* Card Styles */
+.card-flip-container {
+    perspective: 1000px;
+    margin-bottom: 1rem;
+}
+
+.flip-hint {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(124, 58, 237, 0.9);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.625rem;
+    z-index: 10;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        transform: scale(1); 
+    }
+    50% { 
+        transform: scale(1.05); 
+    }
+}
+
+.card-flip {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.card-flip.is-flipped {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 1.5rem;
+    background: white;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-back {
+    transform: rotateY(180deg);
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Recipe Image */
+.recipe-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+/* Macro Display */
+.macro-bar {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+}
+
+.macro-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.macro-value {
+    font-weight: bold;
+    color: #7c3aed;
+}
+
+/* Loading Spinner */
+.spinner {
+    border: 3px solid #e9d5ff;
+    border-top: 3px solid #7c3aed;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tabs - Native iOS style */
+.tab-btn {
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.tab-btn.active {
+    background-color: #7c3aed;
+    color: white;
+    transform: scale(1.05);
+}
+
+.tab-btn:not(.active) {
+    background-color: #e9d5ff;
+    color: #7c3aed;
+}
+
+/* Navigation - Native tab bar style */
+.nav-item {
+    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+}
+
+.nav-item:active {
+    background-color: rgba(124, 58, 237, 0.1);
+}
+
+.nav-item.active {
+    color: #7c3aed;
+}
+
+/* Save Button */
+.save-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    transition: all 0.2s ease;
+}
+
+.save-btn:active {
+    transform: scale(0.95);
+}
+
+.saved-indicator {
+    animation: savedPulse 0.5s ease;
+}
+
+@keyframes savedPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Comments */
+.comment-item {
+    padding: 0.5rem;
+    background-color: #f9fafb;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.comment-author {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: #7c3aed;
+}
+
+.comment-text {
+    font-size: 0.8125rem;
+    color: #4b5563;
+    margin: 0.25rem 0;
+}
+
+.comment-date {
+    font-size: 0.625rem;
+    color: #9ca3af;
+}
+
+/* Reaction Buttons */
+.reaction-btn {
+    padding: 0.5rem 0.75rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    border: none;
+    background: #f3f4f6;
+}
+
+.like-btn {
+    color: #10b981;
+}
+
+.like-btn:active {
+    background: #10b981;
+    color: white;
+}
+
+.dislike-btn {
+    color: #ef4444;
+}
+
+.dislike-btn:active {
+    background: #ef4444;
+    color: white;
+}
+
+/* YouTube Button */
+.youtube-btn {
+    background: #ff0000;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+/* Community Badge */
+.community-badge {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 20;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9ca3af;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #6b7280;
+}
+
+/* Mobile Safe Areas */
+@supports (padding: max(0px)) {
+    .fixed.bottom-0 {
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .flex-1.flex.flex-col {
+        max-width: 428px; /* iPhone 14 Pro Max width */
+        margin: 0 auto;
+    }
+}
+
+/* iOS-style animations */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Disable text selection except for inputs */
+.selectable {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Custom scrollbar for desktop */
+@media (min-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #7c3aed;
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #6d28d9;
+    }
+}

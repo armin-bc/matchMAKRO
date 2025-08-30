@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Kitchen Helper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fce7f3; /* Light Pink */
+        }
+        .card-flip-container {
+            perspective: 1000px;
+        }
+        .card-flip {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        .card-flip.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card-front {
+            background-color: #fff;
+            color: #333;
+        }
+        .card-back {
+            background-color: #fff;
+            color: #333;
+            transform: rotateY(180deg);
+            padding: 1.5rem;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .recipe-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .card-flip:hover .card-front {
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .card-flip:hover .card-back {
+            transform: rotateY(180deg) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        @media (max-width: 640px) {
+            .card-flip { height: 350px; }
+            .recipe-list-container {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+        .help-modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+        .help-modal-content {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+        .comment-item {
+            padding: 0.5rem;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="p-6 flex flex-col items-center min-h-screen">
+
+    <!-- Main App Container -->
+    <div id="app-container" class="w-full max-w-sm bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
+        <!-- Firebase Status -->
+        <p id="firebase-status" class="text-xs text-center text-gray-500 mb-2"></p>
+        <p class="text-xs text-gray-500 mb-4">User ID: <span id="user-id"></span></p>
+
+        <!-- Splash Screen -->
+        <div id="splash-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-fuchsia-200 rounded-3xl z-50 transition-opacity duration-1000">
+            <h1 class="text-4xl font-bold text-fuchsia-800">AI Kitchen Helper</h1>
+            <p class="text-fuchsia-600 mt-2">Unlock your kitchen's potential.</p>
+            <div class="mt-8">
+                <button id="start-btn" class="bg-fuchsia-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-fuchsia-700 transition-colors duration-300">Get Started</button>
+            </div>
+        </div>
+
+        <!-- Step 1: Ingredient Input -->
+        <div id="step-1" class="w-full flex flex-col items-center" style="display: none;">
+            <div class="w-12 h-12 bg-fuchsia-600 rounded-full flex items-center justify-center text-white font-bold text-xl">1</div>
+            <h2 class="text-2xl font-bold text-fuchsia-800 mt-4 text-center">What's in your kitchen?</h2>
+            <p class="text-fuchsia-600 text-center mt-2">Type your ingredients or upload a picture.</p>
+            
+            <div class="w-full mt-6">
+                <label for="image-upload" class="w-full flex flex-col items-center justify-center p-6 bg-fuchsia-100 rounded-xl cursor-pointer hover:bg-fuchsia-200 transition-colors duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-fuchsia-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.808-1.212A2 2 0 0110.74 4h2.52a2 2 0 011.664.89l.808 1.212a2 2 0 001.664.89H21a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="mt-2 text-fuchsia-600 font-medium">Click to upload or take a photo</span>
+                </label>
+                <input type="file" id="image-upload" accept="image/*" class="hidden">
+            </div>
+
+            <p class="text-fuchsia-600 font-bold mt-4 mb-2">OR</p>
+            <textarea id="ingredients-text" rows="4" placeholder="e.g., chicken, broccoli, rice, soy sauce" class="w-full p-4 rounded-xl border border-fuchsia-300 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition-shadow"></textarea>
+
+            <button id="next-1-btn" class="w-full mt-6 bg-fuchsia-600 text-white font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-700 transition-colors duration-300">Next</button>
+        </div>
+
+        <!-- Step 2: Customization -->
+        <div id="step-2" class="w-full flex flex-col items-center" style="display: none;">
+            <div class="w-12 h-12 bg-fuchsia-600 rounded-full flex items-center justify-center text-white font-bold text-xl">2</div>
+            <h2 class="text-2xl font-bold text-fuchsia-800 mt-4 text-center">Customize your meal</h2>
+            <p class="text-fuchsia-600 text-center mt-2">Personalize your recipe with specific requirements.</p>
+
+            <div class="w-full mt-6 space-y-4">
+                <div>
+                    <label for="cuisine" class="block text-fuchsia-700 font-bold mb-1">Cuisine Style</label>
+                    <select id="cuisine" class="w-full p-3 rounded-xl border border-fuchsia-300 bg-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition-shadow">
+                        <option value="any">Any</option>
+                        <option value="italian">Italian</option>
+                        <option value="mexican">Mexican</option>
+                        <option value="asian">Asian</option>
+                        <option value="indian">Indian</option>
+                        <option value="american">American</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="dietary-restriction" class="block text-fuchsia-700 font-bold mb-1">Dietary Restrictions</label>
+                    <select id="dietary-restriction" class="w-full p-3 rounded-xl border border-fuchsia-300 bg-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition-shadow">
+                        <option value="">None</option>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="gluten-free">Gluten-Free</option>
+                        <option value="dairy-free">Dairy-Free</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="exclude" class="block text-fuchsia-700 font-bold mb-1">Exclude Ingredients</label>
+                    <input type="text" id="exclude" placeholder="e.g., peanuts, cilantro" class="w-full p-3 rounded-xl border border-fuchsia-300 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition-shadow">
+                </div>
+            </div>
+
+            <div class="w-full flex justify-between mt-6 space-x-4">
+                <button id="back-1-btn" class="w-1/2 bg-fuchsia-200 text-fuchsia-800 font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-300 transition-colors duration-300">Back</button>
+                <button id="next-2-btn" class="w-1/2 bg-fuchsia-600 text-white font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-700 transition-colors duration-300">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Generation -->
+        <div id="step-3" class="w-full flex flex-col items-center" style="display: none;">
+            <div class="w-12 h-12 bg-fuchsia-600 rounded-full flex items-center justify-center text-white font-bold text-xl">3</div>
+            <h2 class="text-2xl font-bold text-fuchsia-800 mt-4 text-center">Ready to get cooking?</h2>
+            <p class="text-fuchsia-600 text-center mt-2">Find the perfect meal for your needs.</p>
+
+            <button id="generate-btn" class="w-full mt-8 bg-fuchsia-600 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:bg-fuchsia-700 transition-colors duration-300 pulse">
+                Generate Recipes!
+            </button>
+            <button id="saved-recipes-btn" class="w-full mt-4 bg-fuchsia-200 text-fuchsia-800 font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-300 transition-colors duration-300">View Saved Recipes</button>
+            <button id="back-2-btn" class="w-full mt-4 bg-fuchsia-200 text-fuchsia-800 font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-300 transition-colors duration-300">Back</button>
+            <button id="help-btn" class="w-full mt-4 bg-fuchsia-200 text-fuchsia-800 font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-300 transition-colors duration-300">Help / About</button>
+        </div>
+
+        <!-- Step 4: Recipe Suggestions -->
+        <div id="step-4" class="w-full flex flex-col items-center" style="display: none;">
+            <div id="recipe-list" class="w-full space-y-6"></div>
+            <button id="back-3-btn" class="w-full mt-6 bg-fuchsia-200 text-fuchsia-800 font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-300 transition-colors duration-300">Back</button>
+        </div>
+
+        <!-- Step 5: Saved Recipes -->
+        <div id="step-5" class="w-full flex flex-col items-center" style="display: none;">
+            <h2 class="text-2xl font-bold text-fuchsia-800 mt-4 text-center">My Saved Recipes</h2>
+            <p class="text-fuchsia-600 text-center mt-2">Browse your favorite meals.</p>
+            <div id="saved-recipe-list" class="w-full space-y-6 mt-6"></div>
+            <button id="back-4-btn" class="w-full mt-6 bg-fuchsia-200 text-fuchsia-800 font-bold py-3 rounded-full shadow-lg hover:bg-fuchsia-300 transition-colors duration-300">Back</button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div class="flex flex-col items-center">
+                <div class="spinner"></div>
+                <p class="text-white mt-4" id="loading-text">Generating recipes...</p>
+            </div>
+        </div>
+        
+        <!-- Message Box -->
+        <div id="message-box" class="fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg text-white font-bold text-center transition-all duration-300" style="opacity: 0; transform: translate(-50%, -200%);"></div>
+
+        <!-- Help Modal -->
+        <div id="help-modal" class="help-modal">
+            <div class="help-modal-content">
+                <span id="close-help-btn" class="close-btn">&times;</span>
+                <h2 class="text-2xl font-bold text-fuchsia-800 mb-4">About AI Kitchen Helper</h2>
+                <p class="text-fuchsia-600 text-sm mb-4">
+                    Welcome to AI Kitchen Helper! This app is designed to help you discover new recipes using the ingredients you already have.
+                    Simply tell us what's in your pantry by typing a list or uploading a picture, and our AI will suggest delicious meal ideas.
+                </p>
+                <p class="text-fuchsia-600 text-sm">
+                    We've designed this app to be a community resource. When our AI generates a new recipe, it's saved for others to discover,
+                    and you can save your favorites to your personal list. This creates a growing library of recipes for everyone to enjoy.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const splashScreen = document.getElementById('splash-screen');
+        const startBtn = document.getElementById('start-btn');
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        const step4 = document.getElementById('step-4');
+        const step5 = document.getElementById('step-5');
+        const next1Btn = document.getElementById('next-1-btn');
+        const back1Btn = document.getElementById('back-1-btn');
+        const next2Btn = document.getElementById('next-2-btn');
+        const back2Btn = document.getElementById('back-2-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const back3Btn = document.getElementById('back-3-btn');
+        const savedRecipesBtn = document.getElementById('saved-recipes-btn');
+        const back4Btn = document.getElementById('back-4-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpBtn = document.getElementById('close-help-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const ingredientsTextarea = document.getElementById('ingredients-text');
+        const imageUpload = document.getElementById('image-upload');
+        const cuisineSelect = document.getElementById('cuisine');
+        const dietaryRestrictionSelect = document.getElementById('dietary-restriction');
+        const excludeInput = document.getElementById('exclude');
+        const recipeList = document.getElementById('recipe-list');
+        const savedRecipeList = document.getElementById('saved-recipe-list');
+        const messageBox = document.getElementById('message-box');
+        const userIdSpan = document.getElementById('user-id');
+
+        // Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, query, where, limit, updateDoc, onSnapshot, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        let db;
+        let auth;
+        let userId;
+        let appId;
+        
+        const initFirebase = async () => {
+            try {
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdSpan.textContent = user.uid;
+                    } else {
+                        userId = 'anonymous';
+                        userIdSpan.textContent = 'anonymous';
+                    }
+                });
+                
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                console.log("Firebase initialized. User ID:", userId);
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                document.getElementById('firebase-status').textContent = 'Error: Failed to connect to Firebase.';
+            }
+        };
+
+        window.firebase = {
+            init: initFirebase,
+            saveRecipe: async (recipe) => {
+                if (!db || !userId) {
+                    console.error("Firestore not initialized or user not authenticated.");
+                    return;
+                }
+                try {
+                    // Save to user's private collection
+                    const privateDocRef = doc(collection(db, 'artifacts', appId, 'users', userId, 'saved_recipes'));
+                    await setDoc(privateDocRef, recipe);
+
+                    // Save to public collection if it doesn't exist
+                    const publicRecipesRef = collection(db, 'artifacts', appId, 'public', 'data', 'recipes');
+                    const q = query(publicRecipesRef, where('name', '==', recipe.name));
+                    const querySnapshot = await getDocs(q);
+
+                    if (querySnapshot.empty) {
+                        const publicDocRef = doc(publicRecipesRef);
+                        await setDoc(publicDocRef, { ...recipe, id: publicDocRef.id, createdBy: userId, likes: 0, dislikes: 0 });
+                        showMessage('Recipe saved successfully!', 'green');
+                    } else {
+                         showMessage('Recipe is already in the community collection.', 'green');
+                    }
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    showMessage('Failed to save recipe.', 'red');
+                }
+            },
+            getSavedRecipes: async (ingredients = []) => {
+                if (!db || !userId) {
+                    console.error("Firestore not initialized or user not authenticated.");
+                    return [];
+                }
+                try {
+                    const recipesRef = collection(db, 'artifacts', appId, 'users', userId, 'saved_recipes');
+                    const q = query(recipesRef);
+                    const querySnapshot = await getDocs(q);
+                    
+                    const savedRecipes = [];
+                    querySnapshot.forEach((doc) => {
+                        savedRecipes.push(doc.data());
+                    });
+                    
+                    if (ingredients.length > 0) {
+                        return savedRecipes.filter(recipe => {
+                            return ingredients.every(ing => recipe.ingredients.some(recipeIng => recipeIng.toLowerCase().includes(ing.toLowerCase())));
+                        });
+                    }
+                    
+                    return savedRecipes;
+                } catch (e) {
+                    console.error("Error fetching saved recipes: ", e);
+                    return [];
+                }
+            },
+            getPublicRecipes: async (ingredients = []) => {
+                if (!db) {
+                    console.error("Firestore not initialized.");
+                    return [];
+                }
+                try {
+                    const publicRecipesRef = collection(db, 'artifacts', appId, 'public', 'data', 'recipes');
+                    const q = query(publicRecipesRef);
+                    
+                    const querySnapshot = await getDocs(q);
+                    let publicRecipes = [];
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        publicRecipes.push({ ...data, id: doc.id });
+                    });
+                    
+                    if (ingredients.length > 0) {
+                        publicRecipes = publicRecipes.filter(recipe => {
+                            return ingredients.every(ing => recipe.ingredients.some(recipeIng => recipeIng.toLowerCase().includes(ing.toLowerCase())));
+                        });
+                    }
+
+                    // Sort by likes, descending
+                    publicRecipes.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+
+                    return publicRecipes;
+
+                } catch (e) {
+                    console.error("Error fetching public recipes: ", e);
+                    return [];
+                }
+            },
+            updateLikes: async (recipeId, type) => {
+                if (!db) {
+                    console.error("Firestore not initialized.");
+                    return;
+                }
+                try {
+                    const publicDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'recipes', recipeId);
+                    const docSnap = await getDoc(publicDocRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        let likes = data.likes || 0;
+                        let dislikes = data.dislikes || 0;
+
+                        if (type === 'like') {
+                            likes++;
+                        } else if (type === 'dislike') {
+                            dislikes++;
+                        }
+
+                        await updateDoc(publicDocRef, { likes, dislikes });
+                    }
+                } catch (e) {
+                    console.error("Error updating likes: ", e);
+                }
+            },
+            addComment: async (recipeId, comment) => {
+                if (!db) {
+                    console.error("Firestore not initialized.");
+                    return;
+                }
+                try {
+                    const commentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'recipes', recipeId, 'comments');
+                    await addDoc(commentsRef, {
+                        userId: userId,
+                        text: comment,
+                        createdAt: new Date()
+                    });
+                } catch (e) {
+                    console.error("Error adding comment: ", e);
+                }
+            },
+            getComments: (recipeId, callback) => {
+                if (!db) {
+                    console.error("Firestore not initialized.");
+                    return;
+                }
+                const commentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'recipes', recipeId, 'comments');
+                const q = query(commentsRef);
+                return onSnapshot(q, (querySnapshot) => {
+                    const comments = [];
+                    querySnapshot.forEach((doc) => {
+                        comments.push(doc.data());
+                    });
+                    // Sort comments by creation time (newest first)
+                    comments.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+                    callback(comments);
+                });
+            }
+        };
+
+        let currentStep = 0;
+        const steps = [splashScreen, step1, step2, step3, step4, step5];
+
+        const showMessage = (message, color) => {
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = color === 'green' ? '#4CAF50' : '#F44336';
+            messageBox.style.opacity = '1';
+            messageBox.style.transform = 'translate(-50%, 0)';
+            setTimeout(() => {
+                messageBox.style.opacity = '0';
+                messageBox.style.transform = 'translate(-50%, -200%)';
+            }, 3000);
+        };
+
+        const showStep = (stepIndex) => {
+            steps.forEach((step, index) => {
+                step.style.display = index === stepIndex ? 'flex' : 'none';
+            });
+            currentStep = stepIndex;
+        };
+        
+        const showLoading = (show, text = 'Generating recipes...') => {
+            loadingText.textContent = text;
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        };
+
+        const parseRecipeData = (jsonString) => {
+            try {
+                return JSON.parse(jsonString);
+            } catch (e) {
+                console.error("Failed to parse JSON string:", e);
+                console.log("Raw JSON string:", jsonString);
+                showMessage('Failed to process recipes. Please try again.', 'red');
+                return null;
+            }
+        };
+
+        let unsubscribeComments;
+
+        const createRecipeCard = (recipe, isSaved = false) => {
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-flip-container';
+
+            const card = document.createElement('div');
+            card.className = 'card-flip cursor-pointer';
+
+            const front = document.createElement('div');
+            front.className = 'card-front flex flex-col items-center p-6';
+            front.innerHTML = `
+                <img src="${recipe.image_url}" alt="${recipe.name}" class="recipe-image mb-4">
+                <h3 class="text-xl font-bold text-fuchsia-800 text-center">${recipe.name}</h3>
+                <div class="mt-4 text-center w-full">
+                    <p class="text-sm text-fuchsia-600 font-semibold">Macros:</p>
+                    <p class="text-sm mt-1">${recipe.macros}</p>
+                    <div class="flex items-center justify-center space-x-4 mt-2">
+                        <span class="text-fuchsia-700 font-bold">${recipe.likes || 0} <i class="fa-solid fa-thumbs-up"></i></span>
+                        <span class="text-fuchsia-700 font-bold">${recipe.dislikes || 0} <i class="fa-solid fa-thumbs-down"></i></span>
+                    </div>
+                </div>
+            `;
+
+            const back = document.createElement('div');
+            back.className = 'card-back flex flex-col items-start';
+            back.innerHTML = `
+                <h3 class="text-xl font-bold text-fuchsia-800 mb-2">${recipe.name}</h3>
+                <div class="w-full h-px bg-fuchsia-300 my-2"></div>
+                <p class="text-fuchsia-700 font-bold mb-1">Ingredients:</p>
+                <ul class="list-disc list-inside text-sm text-fuchsia-600 mb-4 pl-4">
+                    ${recipe.ingredients.map(ing => `<li class="ml-4">${ing}</li>`).join('')}
+                </ul>
+                <p class="text-fuchsia-700 font-bold mb-1">Instructions:</p>
+                <ol class="list-decimal list-inside text-sm text-fuchsia-600 space-y-1 pl-4">
+                    ${recipe.instructions.map(inst => `<li class="ml-4">${inst}</li>`).join('')}
+                </ol>
+                <div class="w-full mt-4 flex justify-around">
+                    <button class="like-btn text-fuchsia-700 font-bold py-2 px-4 rounded-full hover:bg-fuchsia-100 transition-colors duration-300"><i class="fa-solid fa-thumbs-up"></i></button>
+                    <button class="dislike-btn text-fuchsia-700 font-bold py-2 px-4 rounded-full hover:bg-fuchsia-100 transition-colors duration-300"><i class="fa-solid fa-thumbs-down"></i></button>
+                    <a href="${recipe.youtube_url}" target="_blank" class="text-fuchsia-700 font-bold py-2 px-4 rounded-full hover:bg-fuchsia-100 transition-colors duration-300">
+                        <i class="fa-brands fa-youtube"></i> Video
+                    </a>
+                </div>
+                <div class="w-full h-px bg-fuchsia-300 my-4"></div>
+                <p class="text-fuchsia-700 font-bold mb-2">Comments:</p>
+                <div id="comments-container-${recipe.id}" class="w-full space-y-2"></div>
+                <input type="text" id="comment-input-${recipe.id}" placeholder="Add a comment..." class="w-full p-2 text-sm rounded-xl border border-fuchsia-300 focus:outline-none focus:ring-1 focus:ring-fuchsia-500 transition-shadow mt-2">
+                <button id="add-comment-btn-${recipe.id}" class="w-full mt-2 bg-fuchsia-600 text-white font-bold py-2 rounded-full hover:bg-fuchsia-700 transition-colors duration-300">Add Comment</button>
+            `;
+            
+            card.appendChild(front);
+            card.appendChild(back);
+            cardContainer.appendChild(card);
+            
+            card.addEventListener('click', () => {
+                if (card.classList.contains('is-flipped')) {
+                    if (unsubscribeComments) unsubscribeComments();
+                } else {
+                    if (recipe.id) {
+                         unsubscribeComments = window.firebase.getComments(recipe.id, (comments) => {
+                            const commentsContainer = document.getElementById(`comments-container-${recipe.id}`);
+                            commentsContainer.innerHTML = '';
+                            comments.slice(0, 3).forEach(comment => { // Show top 3 comments
+                                const commentDiv = document.createElement('div');
+                                commentDiv.className = 'comment-item';
+                                commentDiv.innerHTML = `<p class="text-xs font-semibold text-fuchsia-800">${comment.userId.substring(0, 5)}...:</p><p class="text-sm text-fuchsia-600">${comment.text}</p>`;
+                                commentsContainer.appendChild(commentDiv);
+                            });
+                         });
+                    }
+                }
+                card.classList.toggle('is-flipped');
+            });
+            
+            if (recipe.id) {
+                back.querySelector('.like-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.firebase.updateLikes(recipe.id, 'like');
+                });
+                back.querySelector('.dislike-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.firebase.updateLikes(recipe.id, 'dislike');
+                });
+                back.querySelector(`#add-comment-btn-${recipe.id}`).addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const commentInput = document.getElementById(`comment-input-${recipe.id}`);
+                    const commentText = commentInput.value.trim();
+                    if (commentText) {
+                        window.firebase.addComment(recipe.id, commentText);
+                        commentInput.value = '';
+                    }
+                });
+            }
+            
+            return cardContainer;
+        };
+
+        const displayRecipes = (recipes, container, isSavedList = false) => {
+            container.innerHTML = '';
+            if (recipes.length === 0) {
+                container.innerHTML = `<p class="text-center text-fuchsia-600">No recipes found. Try different ingredients or generate a new one!</p>`;
+                return;
+            }
+            recipes.forEach(recipe => {
+                const card = createRecipeCard(recipe, isSavedList);
+                container.appendChild(card);
+            });
+        };
+
+        window.onload = async () => {
+            await window.firebase.init();
+        };
+
+        startBtn.addEventListener('click', () => {
+            splashScreen.style.opacity = '0';
+            setTimeout(() => {
+                showStep(1);
+            }, 500);
+        });
+
+        next1Btn.addEventListener('click', () => showStep(2));
+        back1Btn.addEventListener('click', () => showStep(1));
+        next2Btn.addEventListener('click', () => showStep(3));
+        back2Btn.addEventListener('click', () => showStep(2));
+        back3Btn.addEventListener('click', () => showStep(3));
+        back4Btn.addEventListener('click', () => showStep(3));
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'flex';
+        });
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'none';
+        });
+        window.addEventListener('click', (event) => {
+            if (event.target === helpModal) {
+                helpModal.style.display = 'none';
+            }
+        });
+
+        savedRecipesBtn.addEventListener('click', async () => {
+            showLoading(true, 'Loading your saved recipes...');
+            const savedRecipes = await window.firebase.getSavedRecipes();
+            displayRecipes(savedRecipes, savedRecipeList, true);
+            showLoading(false);
+            showStep(5);
+        });
+
+        imageUpload.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showLoading(true, 'Analyzing your image...');
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64Data = reader.result.split(',')[1];
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [
+                                { text: "List all the food items and ingredients you see in this image. Respond with a comma-separated list of items only, do not include any other text." },
+                                {
+                                    inlineData: {
+                                        mimeType: file.type,
+                                        data: base64Data
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                };
+                
+                let retries = 0;
+                const maxRetries = 3;
+                
+                const fetchWithRetry = async () => {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!response.ok) {
+                            if (response.status === 429 && retries < maxRetries) {
+                                retries++;
+                                const delay = Math.pow(2, retries) * 1000;
+                                console.log(`Rate limit hit. Retrying in ${delay / 1000}s...`);
+                                await new Promise(resolve => setTimeout(resolve, delay));
+                                return fetchWithRetry();
+                            }
+                            throw new Error(`API error: ${response.statusText}`);
+                        }
+                        const result = await response.json();
+                        const ingredients = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                        ingredientsTextarea.value = ingredients.replace(/\n/g, '');
+                        showLoading(false);
+                    } catch (error) {
+                        console.error('API call failed:', error);
+                        showLoading(false);
+                        showMessage('Failed to analyze image.', 'red');
+                    }
+                };
+                await fetchWithRetry();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        generateBtn.addEventListener('click', async () => {
+            showLoading(true, 'Finding the perfect recipe...');
+            
+            const ingredients = ingredientsTextarea.value.split(',').map(item => item.trim()).filter(item => item !== '');
+            const cuisine = cuisineSelect.value;
+            const dietaryRestriction = dietaryRestrictionSelect.value;
+            const exclude = excludeInput.value;
+
+            // Tier 1: Check public community recipes and sort by likes
+            const publicRecipes = await window.firebase.getPublicRecipes(ingredients);
+            if (publicRecipes.length > 0) {
+                showMessage('Found recipes from the community!', 'green');
+                displayRecipes(publicRecipes.slice(0, 5), recipeList);
+                showLoading(false);
+                showStep(4);
+                return;
+            }
+
+            // Tier 2: Generate new recipes with Gemini
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const prompt = `Based on the following ingredients: "${ingredients.join(', ')}", provide 5 distinct recipe suggestions.
+            - Cuisine preference: ${cuisine}
+            - Dietary Restrictions: ${dietaryRestriction}
+            - Must exclude: ${exclude}
+            For each recipe, provide the following details in a JSON array. The JSON should only contain the array. Do not include any other text or explanation.
+            
+            The JSON structure should be:
+            [{
+              "name": "string",
+              "image_url": "string (use a placeholder image URL like 'https://placehold.co/400x300/fecaca/fff?text=Recipe')",
+              "macros": "string (e.g., '350 Calories, 20g Protein')",
+              "youtube_url": "string (a link to a YouTube video for this recipe)",
+              "ingredients": ["string"],
+              "instructions": ["string"]
+            }]`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+
+            let retries = 0;
+            const maxRetries = 3;
+            
+            const fetchWithRetry = async () => {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        if (response.status === 429 && retries < maxRetries) {
+                            retries++;
+                            const delay = Math.pow(2, retries) * 1000;
+                            console.log(`Rate limit hit. Retrying in ${delay / 1000}s...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            return fetchWithRetry();
+                        }
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+                    const result = await response.json();
+                    const recipeData = parseRecipeData(result?.candidates?.[0]?.content?.parts?.[0]?.text);
+                    
+                    if (recipeData && Array.isArray(recipeData) && recipeData.length > 0) {
+                        displayRecipes(recipeData, recipeList);
+                        showStep(4);
+                    } else {
+                        showMessage('No recipes found. Please try different ingredients.', 'red');
+                    }
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    showMessage('Failed to generate recipes.', 'red');
+                } finally {
+                    showLoading(false);
+                }
+            };
+            await fetchWithRetry();
+        });
+    </script>
+</body>
+</html>

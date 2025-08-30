@@ -1,0 +1,11 @@
+# Core dependencies
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Firebase Admin SDK (optional for backend management)
+firebase-admin==6.1.0
+
+# Google API Client (optional for direct API access)
+google-api-python-client==2.100.0
+google-auth==2.23.0
+google-auth-httplib2==0.1.1

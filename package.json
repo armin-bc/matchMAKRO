@@ -1,0 +1,36 @@
+{
+  "name": "macrochef",
+  "version": "1.0.0",
+  "description": "AI-Powered Macro-Friendly Meal Planning",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite preview"
+  },
+  "keywords": [
+    "recipe",
+    "nutrition",
+    "macros",
+    "fitness",
+    "meal-planning",
+    "ai",
+    "firebase"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^9.8.8",
+    "postcss": "^7.0.39",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.17",
+    "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "dependencies": {
+    "firebase": "^12.2.1"
+  }
+}
